@@ -1,6 +1,11 @@
 import 'package:client/models/employee_model.dart';
+import 'package:client/screens/groupTwo/admin_dashboard_screen.dart';
+import 'package:client/screens/groupTwo/department_crud_screen.dart';
+import 'package:client/screens/groupTwo/edit_admin_employee_screen.dart';
+import 'package:client/screens/groupTwo/edit_personal_screen.dart';
 import 'package:client/screens/groupTwo/employee_detail_screen.dart';
 import 'package:client/screens/groupTwo/employee_list_screen.dart';
+import 'package:client/screens/groupTwo/position_crud_screen.dart';
 import 'package:client/screens/groupTwo/role_selection_screen.dart';
 import 'package:client/widgets/navbar.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +48,7 @@ final GoRouter router = GoRouter(
     GoRoute(path: "/login", builder: (context, state) => const LoginScreen()),
 
     // ========================================
-    // GROUP TWO ROUTES - KARYAWAN MODE
+    // GROUP TWO ROUTES
     // ========================================
 
     // Role selection screen
@@ -51,6 +56,8 @@ final GoRouter router = GoRouter(
       path: "/role-selection",
       builder: (context, state) => const RoleSelectionScreen(),
     ),
+
+    // ========== KARYAWAN MODE ==========
 
     // Employee list (Karyawan mode)
     GoRoute(
@@ -93,23 +100,51 @@ final GoRouter router = GoRouter(
           );
         }
 
-        return Placeholder(
-          child: Center(
-            child: Text(
-              'Edit Personal Screen\nEmployee: ${employee.fullName}\nComing Soon',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        );
+        return EditPersonalScreen(employee: employee);
       },
     ),
 
-    // Admin dashboard (placeholder)
+    // ========== ADMIN MODE ==========
+
+    // Admin dashboard
     GoRoute(
       path: "/admin-dashboard",
-      builder: (context, state) => const Placeholder(
-        child: Center(child: Text('Admin Dashboard - Coming Soon')),
-      ),
+      builder: (context, state) => const AdminDashboardScreen(),
+    ),
+
+    // Admin - Employee list for management
+    GoRoute(
+      path: "/admin/employee-list",
+      builder: (context, state) =>
+          const EmployeeListScreen(isKaryawanMode: false),
+    ),
+
+    // Admin - Edit management
+    GoRoute(
+      path: "/employee/edit-management/:id",
+      builder: (context, state) {
+        final employee = state.extra as EmployeeModel?;
+
+        if (employee == null) {
+          return const Scaffold(
+            body: Center(child: Text('Error: Data karyawan tidak ditemukan')),
+          );
+        }
+
+        return EditAdminEmployeeScreen(employee: employee);
+      },
+    ),
+
+    // Admin - Position CRUD
+    GoRoute(
+      path: "/admin/positions",
+      builder: (context, state) => const PositionCrudScreen(),
+    ),
+
+    // Admin - Department CRUD
+    GoRoute(
+      path: "/admin/departments",
+      builder: (context, state) => const DepartmentCrudScreen(),
     ),
   ],
 );
