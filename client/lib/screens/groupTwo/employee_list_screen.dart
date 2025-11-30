@@ -31,6 +31,10 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
     try {
       final response = await EmployeeService.instance.getEmployees();
 
+      print("Response success: ${response.success}"); // Debug
+      print("Response message: ${response.message}"); // Debug
+      print("Response data: ${response.data}"); // Debug
+
       if (response.success && response.data != null) {
         setState(() {
           _employees = response.data!;
@@ -38,13 +42,16 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
         });
       } else {
         setState(() {
-          _errorMessage = response.message;
+          _errorMessage = response.message.isEmpty
+              ? 'Gagal memuat data karyawan'
+              : response.message;
           _isLoading = false;
         });
       }
     } catch (e) {
+      print("Error loading employees: $e"); // Debug
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = 'Error: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -171,18 +178,18 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
               ],
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              // Navigate to detail screen with employee ID
-              if (widget.isKaryawanMode) {
-                context.push(
-                  '/employee-detail/${emp.id}',
-                  extra: {'employee': emp, 'isKaryawanMode': true},
-                );
-              } else {
-                context.push(
-                  '/employee-detail/${emp.id}',
-                  extra: {'employee': emp, 'isKaryawanMode': false},
-                );
+            onTap: () async {
+              final result = await context.push<bool>(
+                '/employee-detail/${emp.id}',
+                extra: {
+                  'employee': emp,
+                  'isKaryawanMode': widget.isKaryawanMode,
+                },
+              );
+
+              // JIKA ADA PERUBAHAN DARI DETAIL SCREEN, RELOAD LIST
+              if (result == true) {
+                _loadEmployees();
               }
             },
           ),

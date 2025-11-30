@@ -13,14 +13,38 @@ class EmployeeService extends BaseService<EmployeeModel> {
     try {
       final response = await dio.get("/employees");
 
-      return ApiResponse<List<EmployeeModel>>.fromJson(response.data, (
-        jsonData,
-      ) {
-        return parseData(jsonData, "employees", EmployeeModel.fromJson);
-      });
+      log("Raw Response: ${response.data}");
+
+      // Parse manual karena struktur nested
+      final responseData = response.data as Map<String, dynamic>;
+
+      final List<EmployeeModel> employees = [];
+
+      // Data ada di responseData['data']['employees']
+      if (responseData['data'] != null &&
+          responseData['data']['employees'] != null) {
+        final employeesData = responseData['data']['employees'] as List;
+
+        for (var item in employeesData) {
+          employees.add(EmployeeModel.fromJson(item as Map<String, dynamic>));
+        }
+      }
+
+      return ApiResponse<List<EmployeeModel>>(
+        message: responseData['message'] as String? ?? '',
+        success: responseData['success'] as bool? ?? true,
+        data: employees,
+        error: responseData['error'],
+      );
     } catch (e, s) {
       log("Error: Get Employees Failed", error: e, stackTrace: s);
-      rethrow;
+
+      return ApiResponse<List<EmployeeModel>>(
+        message: 'Gagal memuat data: ${e.toString()}',
+        success: false,
+        data: null,
+        error: e,
+      );
     }
   }
 
@@ -29,72 +53,157 @@ class EmployeeService extends BaseService<EmployeeModel> {
     try {
       final response = await dio.get("/employees/$id");
 
-      return ApiResponse<EmployeeModel>.fromJson(response.data, (jsonData) {
-        final data = jsonData as Map<String, dynamic>;
-        return EmployeeModel.fromJson(data['employee']);
-      });
+      final responseData = response.data as Map<String, dynamic>;
+
+      EmployeeModel? employee;
+
+      // Data ada di responseData['data']['employee'] atau langsung di responseData['data']
+      if (responseData['data'] != null) {
+        final data = responseData['data'];
+
+        if (data is Map<String, dynamic>) {
+          // Cek apakah ada key 'employee'
+          if (data.containsKey('employee')) {
+            employee = EmployeeModel.fromJson(data['employee']);
+          } else {
+            // Langsung parse dari data
+            employee = EmployeeModel.fromJson(data);
+          }
+        }
+      }
+
+      return ApiResponse<EmployeeModel>(
+        message: responseData['message'] as String? ?? '',
+        success: responseData['success'] as bool? ?? true,
+        data: employee,
+        error: responseData['error'],
+      );
     } catch (e, s) {
       log("Error: Get Employee By ID Failed", error: e, stackTrace: s);
-      rethrow;
+
+      return ApiResponse<EmployeeModel>(
+        message: 'Gagal memuat data: ${e.toString()}',
+        success: false,
+        data: null,
+        error: e,
+      );
     }
   }
 
   /// Update employee profile (by employee themselves)
-  /// Only updates: first_name, last_name, gender, address
   Future<ApiResponse<EmployeeModel>> updateProfile(
     int id,
     Map<String, dynamic> data,
   ) async {
     try {
-      final response = await dio.patch(
+      // Tambahkan _method untuk Laravel method spoofing
+      data['_method'] = 'PATCH';
+
+      final response = await dio.post(
+        // GANTI PATCH JADI POST
         "/employee/profile/$id",
         data: data,
         options: Options(headers: {"accept": "application/json"}),
       );
 
-      return ApiResponse<EmployeeModel>.fromJson(response.data, (jsonData) {
-        final responseData = jsonData as Map<String, dynamic>;
-        return EmployeeModel.fromJson(responseData['employee']);
-      });
+      final responseData = response.data as Map<String, dynamic>;
+
+      EmployeeModel? employee;
+
+      if (responseData['data'] != null) {
+        final data = responseData['data'];
+
+        if (data is Map<String, dynamic>) {
+          if (data.containsKey('employee')) {
+            employee = EmployeeModel.fromJson(data['employee']);
+          } else {
+            employee = EmployeeModel.fromJson(data);
+          }
+        }
+      }
+
+      return ApiResponse<EmployeeModel>(
+        message: responseData['message'] as String? ?? 'Berhasil diperbarui',
+        success: responseData['success'] as bool? ?? true,
+        data: employee,
+        error: responseData['error'],
+      );
     } on DioException catch (e, s) {
       log("Error: Update Profile Failed", error: e, stackTrace: s);
 
+      String errorMessage = 'Gagal memperbarui profil';
+
       if (e.response?.statusCode == 422) {
-        throw Exception('Validasi gagal: ${e.response?.data['errors']}');
+        errorMessage = 'Validasi gagal: ${e.response?.data['message'] ?? ''}';
+      } else if (e.response?.data != null &&
+          e.response?.data['message'] != null) {
+        errorMessage = e.response?.data['message'];
       }
 
-      throw Exception(
-        e.response?.data['message'] ?? 'Gagal memperbarui profil',
+      return ApiResponse<EmployeeModel>(
+        message: errorMessage,
+        success: false,
+        data: null,
+        error: e.response?.data,
       );
     }
   }
 
   /// Update employee management data (by admin)
-  /// Only updates: employment_status, position_id, department_id
   Future<ApiResponse<EmployeeModel>> updateManagement(
     int id,
     Map<String, dynamic> data,
   ) async {
     try {
-      final response = await dio.patch(
+      // Tambahkan _method untuk Laravel method spoofing
+      data['_method'] = 'PATCH';
+
+      final response = await dio.post(
+        // GANTI PATCH JADI POST
         "/employee/management/$id",
         data: data,
         options: Options(headers: {"accept": "application/json"}),
       );
 
-      return ApiResponse<EmployeeModel>.fromJson(response.data, (jsonData) {
-        final responseData = jsonData as Map<String, dynamic>;
-        return EmployeeModel.fromJson(responseData['employee']);
-      });
+      final responseData = response.data as Map<String, dynamic>;
+
+      EmployeeModel? employee;
+
+      if (responseData['data'] != null) {
+        final data = responseData['data'];
+
+        if (data is Map<String, dynamic>) {
+          if (data.containsKey('employee')) {
+            employee = EmployeeModel.fromJson(data['employee']);
+          } else {
+            employee = EmployeeModel.fromJson(data);
+          }
+        }
+      }
+
+      return ApiResponse<EmployeeModel>(
+        message: responseData['message'] as String? ?? 'Berhasil diperbarui',
+        success: responseData['success'] as bool? ?? true,
+        data: employee,
+        error: responseData['error'],
+      );
     } on DioException catch (e, s) {
       log("Error: Update Management Failed", error: e, stackTrace: s);
 
+      String errorMessage = 'Gagal memperbarui data manajemen';
+
       if (e.response?.statusCode == 422) {
-        throw Exception('Validasi gagal: ${e.response?.data['errors']}');
+        errorMessage = 'Validasi gagal: ${e.response?.data['message'] ?? ''}';
+      } else if (e.response?.data != null &&
+          e.response?.data['message'] != null) {
+        errorMessage = e.response?.data['message'];
       }
 
-      throw Exception(
-        e.response?.data['message'] ?? 'Gagal memperbarui data manajemen',
+      return ApiResponse<EmployeeModel>(
+        message: errorMessage,
+        success: false,
+        data: null,
+        error: e.response?.data,
       );
     }
   }

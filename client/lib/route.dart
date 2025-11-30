@@ -82,7 +82,7 @@ final GoRouter router = GoRouter(
         final isKaryawanMode = extra['isKaryawanMode'] as bool;
 
         return EmployeeDetailScreen(
-          employee: employee,
+          initialEmployee: employee, // UBAH NAMA PARAMETER
           isKaryawanMode: isKaryawanMode,
         );
       },

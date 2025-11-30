@@ -38,23 +38,21 @@ class _EditPersonalScreenState extends State<EditPersonalScreen> {
   }
 
   Future<void> _save() async {
-    if (_firstNameCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Nama depan harus diisi')));
-      return;
-    }
-
     setState(() => _isLoading = true);
 
-    final data = {
-      'first_name': _firstNameCtrl.text.trim(),
-      'last_name': _lastNameCtrl.text.trim(),
-      'gender': _gender,
-      'address': _addressCtrl.text.trim(),
-    };
-
     try {
+      final data = <String, dynamic>{};
+
+      if (_gender != null) data['gender'] = _gender;
+      if (_firstNameCtrl.text.trim().isNotEmpty)
+        data['first_name'] = _firstNameCtrl.text.trim();
+      if (_lastNameCtrl.text.trim().isNotEmpty)
+        data['last_name'] = _lastNameCtrl.text.trim();
+      if (_addressCtrl.text.trim().isNotEmpty)
+        data['address'] = _addressCtrl.text.trim();
+
+      data['_method'] = 'PATCH'; // Method spoofing
+
       final response = await EmployeeService.instance.updateProfile(
         widget.employee.id,
         data,
@@ -65,7 +63,9 @@ class _EditPersonalScreenState extends State<EditPersonalScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Data pribadi berhasil diperbarui')),
           );
-          context.pop();
+
+          // RETURN TRUE UNTUK SIGNAL BERHASIL UPDATE
+          context.pop(true);
         } else {
           ScaffoldMessenger.of(
             context,
