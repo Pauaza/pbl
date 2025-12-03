@@ -1,5 +1,20 @@
 // lib/router.dart
+import 'package:client/screens/employee_screen.dart';
+import 'package:client/screens/home_screen.dart';
+import 'package:client/screens/login_screen.dart';
+import 'package:client/screens/forgot_password_screen.dart';
+import 'package:client/screens/profile_screen.dart';
+import 'package:client/screens/change_password_screen.dart';
+import 'package:client/screens/register_screen.dart';
+import 'package:client/services/auth_service.dart';
+import 'package:client/widgets/navbar_admin.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
+import 'screens/admin_screen.dart';
+import 'widgets/navbar_user.dart';
+
+final storage = FlutterSecureStorage();
 
 import 'package:client/screens/login_screen.dart';
 import 'package:client/screens/Group_1/Admin/home_screen.dart';
@@ -10,11 +25,90 @@ import 'package:client/screens/Group_1/Admin/admin_izin_manager.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/',
+  initialLocation: "/login",
+  redirect: (context, state) {
+    return AuthService.instance.redirectUser(state);
+  },
+
   routes: [
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) => Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: NavbarAdmin(navigationShell: navigationShell),
+      ),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: "/admin",
+              builder: (context, state) => const AdminScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: "/admin/employee",
+              builder: (context, state) => const EmployeeScreen(),
+            ),
+            GoRoute(
+              path: "/admin/profile-detail",
+              builder: (context, state) {
+                return ProfileScreen(userId: state.extra as int);
+              },
+            ),
+            GoRoute(
+              path: "/admin/register",
+              builder: (context, state) => const RegisterScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: "/admin/profile",
+              builder: (context, state) => const ProfileScreen(),
+            ),
+          ],
+        ),
+      ],
+    ),
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) => Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: NavbarUser(navigationShell: navigationShell),
+      ),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: "/home",
+              builder: (context, state) => const HomeScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: "/profile",
+              builder: (context, state) => const ProfileScreen(),
+            ),
+          ],
+        ),
+      ],
+    ),
+
+    GoRoute(path: "/login", builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/login',
       name: 'login',
       builder: (context, state) => const LoginScreen(),
+      path: "/forgot-password",
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: "/change-password",
+      builder: (context, state) => const ChangePasswordScreen(),
     ),
 
     // HOME SCREEN WITH 6 MENU BUTTONS
