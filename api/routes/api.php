@@ -2,8 +2,7 @@
 
 use App\Http\Controllers\API\IzinDashboardController;
 use App\Http\Controllers\API\AuthController;
-use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\API\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\LetterController;
 
@@ -25,6 +24,12 @@ Route::get('/export-approved-letters', [IzinDashboardController::class, 'exportA
 
 
 
+Route::get("/user/{id}", [UserController::class, "show_user"])->middleware(
+    "auth:sanctum",
+);
+Route::get("/users", [UserController::class, "show_users"])->middleware(
+    "auth:sanctum",
+);
 
 Route::post("/login", [AuthController::class, "login"]);
 Route::post("/register", [AuthController::class, "register"])->middleware(
