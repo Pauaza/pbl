@@ -10,6 +10,7 @@ class NavbarAdmin extends StatelessWidget {
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: navigationShell.currentIndex,
+      type: BottomNavigationBarType.fixed,    
       onTap: (index) {
         navigationShell.goBranch(
           index,
@@ -18,8 +19,12 @@ class NavbarAdmin extends StatelessWidget {
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Employee"),
+        BottomNavigationBarItem(icon: Icon(Icons.work), label: "Employee"),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        BottomNavigationBarItem(icon: Icon(Icons.fingerprint), label: "Attendance"),
+        BottomNavigationBarItem(icon: Icon(Icons.schedule), label: "Schedule"),
       ],
     );
   }
 }
+

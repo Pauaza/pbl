@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Helpers\ResponseWrapper;
 use App\Http\Controllers\Controller;
 use App\Models\Position;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -191,6 +192,19 @@ class PositionController extends Controller
             );
         }
 
+        // Cek apakah posisi masih digunakan oleh karyawan
+        $isUsed = Employee::where('position_id', $id)->exists();
+        
+        if ($isUsed) {
+            return ResponseWrapper::make(
+                "Posisi tidak dapat dihapus karena masih digunakan oleh karyawan",
+                422, // Gunakan 422 untuk validation error
+                false,
+                null,
+                ["error" => "Position is still in use by employees"]
+            );
+        }
+
         try {
             DB::beginTransaction();
 
@@ -204,6 +218,34 @@ class PositionController extends Controller
                 true,
                 null,
                 null
+            );
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            
+            // Tangkap error foreign key constraint
+            if ($e->getCode() == 23000) { // SQL integrity constraint violation
+                return ResponseWrapper::make(
+                    "Posisi tidak dapat dihapus karena masih digunakan oleh karyawan",
+                    422,
+                    false,
+                    null,
+                    ["error" => "Foreign key constraint violation"]
+                );
+            }
+
+            Log::error('Position deletion failed', [
+                'position_id' => $position->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return ResponseWrapper::make(
+                "Gagal menghapus posisi",
+                500,
+                false,
+                null,
+                ["error" => "Internal server error"]
             );
 
         } catch (Throwable $e) {
@@ -221,6 +263,58 @@ class PositionController extends Controller
                 false,
                 null,
                 ["error" => "Internal server error"]
+            );
+        }
+    }
+    public function show_positions()
+    {
+        $positions = Position::all([
+            "id",
+            "name",
+            "rate_reguler",
+            "rate_overtime",
+        ]);
+        return ResponseWrapper::make(
+            "Positions found",
+            200,
+            true,
+            $positions,
+            null,
+        );
+    }
+
+    public function show_position(string $userId)
+    {
+        try {
+            $userPayroll = Employee::select("user_id", "position_id")
+                ->with([
+                    "position" => function ($query) {
+                        $query->select(
+                            "id",
+                            "name",
+                            "rate_reguler",
+                            "rate_overtime",
+                        );
+                    },
+                ])
+                ->where("user_id", $userId)
+                ->first();
+
+            return ResponseWrapper::make(
+                "Sukses",
+                200,
+                true,
+                $userPayroll,
+                null,
+            );
+        } catch (\Error $err) {
+            \Log::error("Error getting show_position", $err->getMessage());
+            return ResponseWrapper::make(
+                "Gagal mengambil data",
+                500,
+                false,
+                null,
+                $err->getMessage(),
             );
         }
     }

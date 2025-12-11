@@ -6,7 +6,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class BaseService<T> {
   @protected
   final Dio dio = Dio(
-    BaseOptions(contentType: "application/json", baseUrl: Constant.apiUrl),
+    BaseOptions(
+      contentType: "application/json",
+      baseUrl: Constant.apiUrl,
+      headers: Map.from({"accept": "application/json"}),
+    ),
   );
 
   BaseService() {
@@ -24,6 +28,7 @@ class BaseService<T> {
     );
   }
 
+  @protected
   List<T> parseData(
     Object? data,
     String attribute,
